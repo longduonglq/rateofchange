@@ -177,3 +177,106 @@ class SlopeDiff(Scene):
         self.play(sec_dots_value[0].animate.set_value(4), run_time=2)
         self.play(sec_dots_value[1].animate.set_value(5), run_time=2)
 
+class MeaningOfDerivative(Scene):
+    def construct(self):
+        pass
+
+class InstantaneousRateOfChange(Scene):
+    def construct(self):
+        def ideal_curve(x):
+            return x
+
+        def realistic_curve(x):
+            return 9*exp(-0.5*(0.6*x - 3)**2)
+
+        x_range = (0, 11)
+        y_range = (0, 10)
+
+        axes = Axes(x_range, y_range, height=6, width=5)
+        axes.add_coordinate_labels()
+
+        ideal_graph = axes.get_graph(ideal_curve, color=BLUE)
+        real_graph = axes.get_graph(realistic_curve, color=BLUE)
+
+        label = axes.get_graph_label(ideal_graph, "p(t)")
+
+        self.play(Write(axes), Write(label))
+        self.play(ShowCreation(ideal_graph, lag_ratio=0.01))
+        self.wait()
+        self.play(ReplacementTransform(ideal_graph, real_graph))
+
+        # tangent line
+        tracker_dot = Dot(color=RED)
+        tracker_dot.move_to(axes.i2gp(0, real_graph))
+
+        tracker = ValueTracker(0)
+        f_always(
+            tracker_dot.move_to,
+            lambda : axes.i2gp(tracker.get_value(), real_graph)
+        )
+        vert_line = always_redraw(lambda: axes.get_v_line(tracker_dot.get_bottom()))
+
+        tan_line = always_redraw(
+            lambda:
+            TangentLine(
+                real_graph,
+                tracker.get_value()/(x_range[1] - x_range[0]),
+                length=2, stroke_capacity=0.75
+            )
+        )
+
+        slope_text, slope_val = slope_label = VGroup(
+            Text("Độ dốc = ", font_size=25),
+            DecimalNumber(
+                0,
+                show_ellipsis=False,
+                num_decimal_places=1,
+                include_sign=True,
+                font_size=25
+            )
+        )
+        slope_label.arrange(RIGHT)
+        always(slope_label.next_to, axes, UP)
+        f_always(slope_val.set_value, tan_line.get_slope)
+
+        self.play(
+            FadeIn(tan_line, scale=0.5),
+            FadeIn(vert_line, scale=0.5),
+            FadeIn(tracker_dot, scale=0.5),
+            Write(slope_label)
+        )
+
+        self.play(tracker.animate.set_value(5), run_time=5)
+        self.wait()
+        self.play(tracker.animate.set_value(10), run_time=5)
+        self.wait()
+
+        self.play(tracker.animate.set_value(3), run_time=2)
+
+        env_params = Text(
+            """
+            T = X °C \n
+
+            Độ ẩm = X %
+            """,
+            font_size=25
+        )
+        env_params.next_to(axes, RIGHT_SIDE)
+        self.play(Write(env_params))
+
+
+        # bacteria
+        bac_size = 0.2
+        bac = SVGMobject(
+            "bacteria.svg",
+            height=bac_size
+        )
+        bac_lines = 1
+
+        for i in range(0, 7):
+            bac_lines += 2
+            grid = bac.get_grid(bac_lines, bac_lines)
+            grid.next_to(axes, LEFT)
+            self.add(grid)
+            self.wait(0.2)
+            self.remove(grid)
