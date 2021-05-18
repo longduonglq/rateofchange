@@ -356,9 +356,9 @@ class Summary(Scene):
 
         sign_lt_zero = Text(" < 0", font_size=25)
         sign_lt_zero.next_to(slope_label, RIGHT)
-        self.play(ReplacementTransform(sign_gt_zero, sign_lt_zero))
         self.play(
             tracker.animate.set_value(6),
+            ReplacementTransform(sign_gt_zero, sign_lt_zero),
             run_time=3,
             rate_func=smooth
         )
@@ -371,5 +371,41 @@ class Summary(Scene):
         # slope = 0
         sign_is_zero = Text(" = 0", font_size=25)
         sign_is_zero.next_to(slope_label, RIGHT)
-        self.play(tracker.animate.set_value(5.3333), run_time=2)
-        self.play(ReplacementTransform(sign_lt_zero, sign_is_zero))
+        self.play(
+            tracker.animate.set_value(5.3333),
+            ReplacementTransform(sign_lt_zero, sign_is_zero),
+            run_time=2
+        )
+
+        self.play(
+            FadeOut(tan_line)
+        )
+        tracker2 = ValueTracker(7)
+        tracker_dot2 = Dot(color=RED)
+        vert_line2 = always_redraw(
+            lambda: axes.get_v_line(tracker_dot2.get_bottom())
+        )
+        f_always(
+            tracker_dot2.move_to,
+            lambda: axes.i2gp(tracker2.get_value(), graph)
+        )
+        sec_line = always_redraw(
+            lambda:
+            Line(
+                axes.i2gp(tracker.get_value(), graph),
+                axes.i2gp(tracker2.get_value(), graph)
+            )
+        )
+        f_always(
+            slope_val.set_value, sec_line.get_slope
+        )
+        self.play(
+            ShowCreation(vert_line2),
+            ShowCreation(sec_line),
+            FadeIn(tracker_dot2),
+            tracker.animate.set_value(3)
+        )
+
+        # avg demonstration
+        small_tangents = [
+        ]
