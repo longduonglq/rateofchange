@@ -263,7 +263,7 @@ class InstantaneousRateOfChange(Scene):
         )
         env_params.next_to(axes, RIGHT_SIDE)
         self.play(Write(env_params))
-
+        self.wait()
 
         # bacteria
         bac_size = 0.2
@@ -273,10 +273,103 @@ class InstantaneousRateOfChange(Scene):
         )
         bac_lines = 1
 
-        for i in range(0, 7):
+        grids = []
+        for i in range(0, 6):
             bac_lines += 2
             grid = bac.get_grid(bac_lines, bac_lines)
             grid.next_to(axes, LEFT)
-            self.add(grid)
-            self.wait(0.2)
-            self.remove(grid)
+            grids.append(grid)
+
+        for (this, next) in zip(grids[:-1], grids[1:]):
+            self.play(ReplacementTransform(this, next))
+
+
+class Summary(Scene):
+    def construct(self):
+        def curve(x):
+            return -(0.75*x-4)**2 + 8
+
+        x_range = (0, 11)
+        y_range = (0, 10)
+
+        axes = Axes(x_range, y_range, height=6, width=5)
+        axes.add_coordinate_labels()
+
+        graph = axes.get_graph(curve, color=BLUE)
+
+        label = axes.get_graph_label(graph, "p(t)")
+
+        self.play(Write(axes), Write(label))
+        self.play(ShowCreation(graph, lag_ratio=0.05))
+        self.wait()
+
+        # tangent line
+        tracker_dot = Dot(color=RED)
+        tracker_dot.move_to(axes.i2gp(0, graph))
+
+        tracker = ValueTracker(2)
+        f_always(
+            tracker_dot.move_to,
+            lambda: axes.i2gp(tracker.get_value(), graph)
+        )
+        vert_line = always_redraw(lambda: axes.get_v_line(tracker_dot.get_bottom()))
+
+        tan_line = always_redraw(
+            lambda:
+            TangentLine(
+                graph,
+                tracker.get_value() / (x_range[1] - x_range[0]),
+                length=2, stroke_capacity=0.75
+            )
+        )
+
+        slope_text, slope_val = slope_label = VGroup(
+            Text("Độ dốc = ", font_size=25),
+            DecimalNumber(
+                0,
+                show_ellipsis=False,
+                num_decimal_places=1,
+                include_sign=True,
+                font_size=25
+            )
+        )
+        slope_label.arrange(RIGHT)
+        always(slope_label.next_to, axes, UP)
+        f_always(slope_val.set_value, tan_line.get_slope)
+
+        self.play(
+            FadeIn(tan_line, scale=0.5),
+            FadeIn(vert_line, scale=0.5),
+            FadeIn(tracker_dot, scale=0.5),
+            Write(slope_label)
+        )
+
+        # slope > 0
+        sign_gt_zero = Text(" > 0", font_size=25)
+        sign_gt_zero.next_to(slope_label, RIGHT)
+        self.play(FadeIn(sign_gt_zero))
+        self.play(
+            tracker.animate.set_value(5),
+            run_time=4,
+            rate_func=there_and_back_with_pause
+        )
+
+        sign_lt_zero = Text(" < 0", font_size=25)
+        sign_lt_zero.next_to(slope_label, RIGHT)
+        self.play(ReplacementTransform(sign_gt_zero, sign_lt_zero))
+        self.play(
+            tracker.animate.set_value(6),
+            run_time=3,
+            rate_func=smooth
+        )
+        self.play(
+            tracker.animate.set_value(9),
+            run_time=6,
+            rate_func=there_and_back
+        )
+
+        # slope = 0
+        sign_is_zero = Text(" = 0", font_size=25)
+        sign_is_zero.next_to(slope_label, RIGHT)
+        self.play(ReplacementTransform(sign_lt_zero, sign_is_zero))
+        self.play(tracker.animate.set_value(5.3333), run_time=2)
