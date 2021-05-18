@@ -406,6 +406,17 @@ class Summary(Scene):
             tracker.animate.set_value(3)
         )
 
+        self.play(
+            tracker.animate.set_value(4),
+            tracker2.animate.set_value(8),
+            run_time=3
+        )
+
+        self.play(
+            tracker.animate.set_value(3),
+            tracker2.animate.set_value(8),
+            run_time=3
+        )
         # avg demonstration
         small_tangents = [
         ]
