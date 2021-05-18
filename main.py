@@ -371,5 +371,5 @@ class Summary(Scene):
         # slope = 0
         sign_is_zero = Text(" = 0", font_size=25)
         sign_is_zero.next_to(slope_label, RIGHT)
-        self.play(ReplacementTransform(sign_lt_zero, sign_is_zero))
         self.play(tracker.animate.set_value(5.3333), run_time=2)
+        self.play(ReplacementTransform(sign_lt_zero, sign_is_zero))
